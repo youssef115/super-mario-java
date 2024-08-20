@@ -1,8 +1,9 @@
 package youssef;
-//42:24
+
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
+import utils.Time;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -14,11 +15,33 @@ public class Window {
     private String title;
     private static Window window=null;
     private long glfwWindow;
+    public float r,g,b,a;
+
+    private static Scene currentScene=null;
 
     private Window(){
         this.width=1920;
         this.height=1080;
         this.title="super mario by youssef";
+        this.r=1;
+        this.g=1;
+        this.b=1;
+        this.a=1;
+    }
+
+    public static void changeScene(int newScene){
+        switch (newScene){
+            case 0:
+                currentScene = new LevelEditorScene();
+                //currentScene.inti();
+                break;
+            case 1:
+                currentScene =new LevelScene();
+                break;
+            default:
+                assert false :"unknown scene "+newScene + "'";
+                break;
+        }
     }
 
     public static Window get(){
@@ -61,10 +84,15 @@ public class Window {
         // this is the memory address where the window is saved
 
         glfwWindow=glfwCreateWindow(this.width,this.height,this.title,NULL,NULL);
-
         if (glfwWindow==NULL){
             throw new IllegalStateException("Faild to create the GLFW window");
         }
+
+        glfwSetCursorPosCallback(glfwWindow,MouseListener::mousePosCallback);
+        glfwSetMouseButtonCallback(glfwWindow,MouseListener::mouseButtonCallback);
+        glfwSetScrollCallback(glfwWindow,MouseListener::mouseScrollCallback);
+
+        glfwSetKeyCallback(glfwWindow,KeyListener::keyCallback);
 
         // Make the opengl context current
         glfwMakeContextCurrent(glfwWindow);
@@ -78,17 +106,32 @@ public class Window {
 
         GL.createCapabilities();
 
+        Window.changeScene(0);
 
     }
     public void loop(){
+        float beginTime= Time.getTime();
+        float endTime;
+        float dt=-1.0f;
             while(!glfwWindowShouldClose(glfwWindow)){
                 //poll events
                 glfwPollEvents();
 
-                glClearColor(1.0f,1.0f,1.0f,1.0f);
+                glClearColor(r,g,b,a);
                 glClear(GL_COLOR_BUFFER_BIT);
 
+                if(dt>=0)
+                currentScene.update(dt);
+
+                if(KeyListener.isKeyPressed(GLFW_KEY_SPACE)){
+                    System.out.println("space key is pressed");
+                }
+
                 glfwSwapBuffers(glfwWindow);
+
+                endTime=Time.getTime();
+                 dt=endTime-beginTime;
+                beginTime=endTime;
             }
     }
 }
